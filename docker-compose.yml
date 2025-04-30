@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compare_game_api
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      - db
+      - cache
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3000}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_DATABASE=${DB_DATABASE:-games_db}
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - CACHE_TTL=${CACHE_TTL:-600}
+      - RAWG_API_KEY=${RAWG_API_KEY} 
+    volumes:
+      - .:/usr/src/app 
+      - /usr/src/app/node_modules 
+   
+
+  db:
+    image: postgres:14-alpine
+    container_name: games_api_db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-games_db}
+    ports:
+      - "${DB_EXTERNAL_PORT:-5433}:5432" 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  cache:
+    image: redis:6-alpine
+    container_name: games_api_cache
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6380}:6379" 
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
